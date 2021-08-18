@@ -857,9 +857,7 @@ int serveClientBlockedOnList(client *receiver, robj *key, robj *dstkey, redisDb 
         argv[0] = (wherefrom == LIST_HEAD) ? shared.lpop :
                                              shared.rpop;
         argv[1] = key;
-        propagate((wherefrom == LIST_HEAD) ?
-            server.lpopCommand : server.rpopCommand,
-            db->id,argv,2,PROPAGATE_AOF|PROPAGATE_REPL);
+        propagate(db->id,argv,2,PROPAGATE_AOF|PROPAGATE_REPL);
 
         /* BRPOP/BLPOP */
         addReplyArrayLen(receiver,2);
@@ -884,10 +882,7 @@ int serveClientBlockedOnList(client *receiver, robj *key, robj *dstkey, redisDb 
             argv[2] = dstkey;
             argv[3] = getStringObjectFromListPosition(wherefrom);
             argv[4] = getStringObjectFromListPosition(whereto);
-            propagate(isbrpoplpush ? server.rpoplpushCommand : server.lmoveCommand,
-                db->id,argv,(isbrpoplpush ? 3 : 5),
-                PROPAGATE_AOF|
-                PROPAGATE_REPL);
+            propagate(db->id,argv,(isbrpoplpush ? 3 : 5),PROPAGATE_AOF|PROPAGATE_REPL);
 
             /* Notify event ("lpush" or "rpush" was notified by lmoveHandlePush). */
             notifyKeyspaceEvent(NOTIFY_LIST,wherefrom == LIST_TAIL ? "rpop" : "lpop",

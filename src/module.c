@@ -613,8 +613,7 @@ void moduleHandlePropagationAfterCommandCallback(RedisModuleCtx *ctx) {
 
     /* Handle the replication of the final EXEC, since whatever a command
      * emits is always wrapped around MULTI/EXEC. */
-    alsoPropagate(server.execCommand,c->db->id,&shared.exec,1,
-        PROPAGATE_AOF|PROPAGATE_REPL);
+    alsoPropagate(c->db->id,&shared.exec,1,PROPAGATE_AOF|PROPAGATE_REPL);
     afterPropagateExec();
 
     /* If this is not a module command context (but is instead a simple
@@ -628,7 +627,7 @@ void moduleHandlePropagationAfterCommandCallback(RedisModuleCtx *ctx) {
             redisOp *rop = &server.also_propagate.ops[j];
             int target = rop->target;
             if (target)
-                propagate(rop->cmd,rop->dbid,rop->argv,rop->argc,target);
+                propagate(rop->dbid,rop->argv,rop->argc,target);
         }
         redisOpArrayFree(&server.also_propagate);
         /* Restore the previous oparray in case of nexted use of the API. */
@@ -962,6 +961,8 @@ void extendKeySpecsIfNeeded(struct redisCommand *cmd) {
         cmd->key_specs = zrealloc(cmd->key_specs, sizeof(keySpec) * cmd->key_specs_max);
     }
 }
+
+// TODO: how do we handle modules? we can split cmd by ` ` but that means the base command name can't conatin spaces
 
 int moduleAddCommandKeySpecBeginSearch(RedisModuleCtx *ctx, const char *name, const char *specflags, keySpec *spec, int *index) {
     int64_t flags = specflags ? commandKeySpecsFlagsFromString(specflags) : 0;
@@ -2134,10 +2135,10 @@ int RM_Replicate(RedisModuleCtx *ctx, const char *cmdname, const char *fmt, ...)
      * will stop being used, so accumulating stuff does not make much sense,
      * nor we could easily use the alsoPropagate() API from threads. */
     if (ctx->flags & REDISMODULE_CTX_THREAD_SAFE) {
-        propagate(cmd,ctx->client->db->id,argv,argc,target);
+        propagate(ctx->client->db->id,argv,argc,target);
     } else {
         moduleReplicateMultiIfNeeded(ctx);
-        alsoPropagate(cmd,ctx->client->db->id,argv,argc,target);
+        alsoPropagate(ctx->client->db->id,argv,argc,target);
     }
 
     /* Release the argv. */
@@ -2159,7 +2160,7 @@ int RM_Replicate(RedisModuleCtx *ctx, const char *cmdname, const char *fmt, ...)
  *
  * The function always returns REDISMODULE_OK. */
 int RM_ReplicateVerbatim(RedisModuleCtx *ctx) {
-    alsoPropagate(ctx->client->cmd,ctx->client->db->id,
+    alsoPropagate(ctx->client->db->id,
         ctx->client->argv,ctx->client->argc,
         PROPAGATE_AOF|PROPAGATE_REPL);
     server.dirty++;

@@ -230,6 +230,9 @@ extern int configOOMScoreAdjValuesDefaults[CONFIG_OOM_COUNT];
 #define CMD_CATEGORY_TRANSACTION (1ULL<<38)
 #define CMD_CATEGORY_SCRIPTING (1ULL<<39)
 
+#define CMD_CONTAINER (1ULL<<40)       /* "container" flag */
+
+
 /* AOF states */
 #define AOF_OFF 0             /* AOF is off */
 #define AOF_ON 1              /* AOF is on */
@@ -1750,8 +1753,10 @@ struct redisCommand {
     char *sflags;   /* Flags as string representation, one char per flag. */
     keySpec key_specs_static[STATIC_KEY_SPECS_NUM];
     /* Use a function to determine keys arguments in a command line.
-     * Used for Redis Cluster redirect. */
+     * Used for Redis Cluster redirect (may be NULL) */
     redisGetKeysProc *getkeys_proc;
+    /* Array of subcommands (may be NULL) */
+    struct redisCommand *subcommands;
 
     /* Runtime data */
     uint64_t flags; /* The actual flags, obtained from the 'sflags' field. */
@@ -1770,6 +1775,7 @@ struct redisCommand {
     int key_specs_num;
     int key_specs_max;
     int movablekeys; /* See populateCommandMovableKeys */
+    dict *subcommands_dict;
 };
 
 struct redisError {
@@ -2319,9 +2325,10 @@ void removeSignalHandlers(void);
 int createSocketAcceptHandler(socketFds *sfd, aeFileProc *accept_handler);
 int changeListenPort(int port, socketFds *sfd, aeFileProc *accept_handler);
 int changeBindAddr(sds *addrlist, int addrlist_len);
-struct redisCommand *lookupCommand(sds name);
+struct redisCommand *lookupCommand(robj **argv ,int argc);
+struct redisCommand *lookupCommandBySds(sds s);
 struct redisCommand *lookupCommandByCString(const char *s);
-struct redisCommand *lookupCommandOrOriginal(sds name);
+struct redisCommand *lookupCommandOrOriginal(robj **argv ,int argc);
 void call(client *c, int flags);
 void propagate(int dbid, robj **argv, int argc, int flags);
 void alsoPropagate(int dbid, robj **argv, int argc, int target);
@@ -2345,7 +2352,7 @@ void usage(void);
 void updateDictResizePolicy(void);
 int htNeedsResize(dict *dict);
 void populateCommandTable(void);
-void resetCommandTableStats(void);
+void resetCommandTableStats(dict* commands);
 void resetErrorTableStats(void);
 void adjustOpenFilesLimit(void);
 void incrementErrorCount(const char *fullerr, size_t namelen);
@@ -2512,7 +2519,6 @@ int sortGetKeys(struct redisCommand *cmd, robj **argv, int argc, getKeysResult *
 int migrateGetKeys(struct redisCommand *cmd, robj **argv, int argc, getKeysResult *result);
 int georadiusGetKeys(struct redisCommand *cmd, robj **argv, int argc, getKeysResult *result);
 int xreadGetKeys(struct redisCommand *cmd, robj **argv, int argc, getKeysResult *result);
-int memoryGetKeys(struct redisCommand *cmd, robj **argv, int argc, getKeysResult *result);
 int lcsGetKeys(struct redisCommand *cmd, robj **argv, int argc, getKeysResult *result);
 
 unsigned short crc16(const char *buf, int len);
@@ -2596,6 +2602,7 @@ void authCommand(client *c);
 void pingCommand(client *c);
 void echoCommand(client *c);
 void commandCommand(client *c);
+void commandsCommand(client *c);
 void setCommand(client *c);
 void setnxCommand(client *c);
 void setexCommand(client *c);
@@ -2745,7 +2752,11 @@ void hgetallCommand(client *c);
 void hexistsCommand(client *c);
 void hscanCommand(client *c);
 void hrandfieldCommand(client *c);
-void configCommand(client *c);
+void configSetCommand(client *c);
+void configGetCommand(client *c);
+void configResetStatCommand(client *c);
+void configRewriteCommand(client *c);
+void configHelpCommand(client *c);
 void hincrbyCommand(client *c);
 void hincrbyfloatCommand(client *c);
 void subscribeCommand(client *c);

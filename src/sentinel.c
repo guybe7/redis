@@ -464,6 +464,9 @@ void sentinelRoleCommand(client *c);
 void sentinelConfigGetCommand(client *c);
 void sentinelConfigSetCommand(client *c);
 
+// TODO:GUYBE
+// 1. should we use subcommands scheme here?
+// 2. should we support the new COMMANDS?
 struct redisCommand sentinelcmds[] = {
     {"ping",pingCommand,1,"fast @connection"},
     {"sentinel",sentinelCommand,-2,"admin"},

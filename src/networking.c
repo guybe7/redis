@@ -3106,7 +3106,7 @@ void replaceClientCommandVector(client *c, int argc, robj **argv) {
     for (j = 0; j < c->argc; j++)
         if (c->argv[j])
             c->argv_len_sum += getStringObjectLen(c->argv[j]);
-    c->cmd = lookupCommandOrOriginal(c->argv[0]->ptr);
+    c->cmd = lookupCommandOrOriginal(c->argv,c->argc);
     serverAssertWithInfo(c,NULL,c->cmd != NULL);
 }
 
@@ -3138,7 +3138,7 @@ void rewriteClientCommandArgument(client *c, int i, robj *newval) {
 
     /* If this is the command name make sure to fix c->cmd. */
     if (i == 0) {
-        c->cmd = lookupCommandOrOriginal(c->argv[0]->ptr);
+        c->cmd = lookupCommandOrOriginal(c->argv,c->argc);
         serverAssertWithInfo(c,NULL,c->cmd != NULL);
     }
 }

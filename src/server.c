@@ -461,7 +461,6 @@ struct redisCommand objectSubcommands[] = {
     {NULL},
 };
 
-#if 0
 {"script",scriptCommand,-2,
      "no-script may-replicate @scripting"},
 
@@ -479,7 +478,38 @@ struct redisCommand objectSubcommands[] = {
 "    Kill the currently executing Lua script.",
 "LOAD <script>",
 "    Load a script into the scripts cache without executing it.",
-#endif
+
+
+struct redisCommand objectSubcommands[] = {
+    {"debug",scriptCommand,3,
+     "read-only @keyspace",
+     {{"read",
+       KSPEC_BS_INDEX,.bs.index={2},
+       KSPEC_FK_RANGE,.fk.range={0,1,0}}}},
+
+    {"freq",objectCommand,3,
+     "read-only @keyspace",
+     {{"read",
+       KSPEC_BS_INDEX,.bs.index={2},
+       KSPEC_FK_RANGE,.fk.range={0,1,0}}}},
+
+    {"idletime",objectCommand,3,
+     "read-only random @keyspace",
+     {{"read",
+       KSPEC_BS_INDEX,.bs.index={2},
+       KSPEC_FK_RANGE,.fk.range={0,1,0}}}},
+
+    {"refcount",objectCommand,3,
+     "read-only @keyspace",
+     {{"read",
+       KSPEC_BS_INDEX,.bs.index={2},
+       KSPEC_FK_RANGE,.fk.range={0,1,0}}}},
+
+    {"help",objectCommand,2,
+     ""},
+
+    {NULL},
+};
 
 struct redisCommand redisCommandTable[] = {
     {"module",moduleCommand,-2,

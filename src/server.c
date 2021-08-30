@@ -4333,14 +4333,13 @@ void redisOpArrayFree(redisOpArray *oa) {
 
 struct redisCommand *lookupCommandLogic(dict *commands, robj **argv, int argc) {
     struct redisCommand *base_cmd = dictFetchValue(commands, argv[0]->ptr);
-    if (argc == 1 || (base_cmd && !base_cmd->subcommands_dict)) {
+    int has_subcommands = base_cmd && base_cmd->subcommands_dict;
+    if (argc == 1 || !has_subcommands) {
         /* Note: It is possible that base_cmd->proc==NULL (e.g. CONFIG) */
         return base_cmd;
-    } else if (base_cmd && base_cmd->subcommands_dict) {
+    } else {
         /* Note: Currently we support just one level of subcommands */
         return dictFetchValue(base_cmd->subcommands_dict, argv[1]->ptr);
-    } else {
-        return NULL;
     }
 }
 

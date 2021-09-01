@@ -461,51 +461,23 @@ struct redisCommand objectSubcommands[] = {
     {NULL},
 };
 
-{"script",scriptCommand,-2,
-     "no-script may-replicate @scripting"},
-
-"DEBUG (YES|SYNC|NO)",
-"    Set the debug mode for subsequent scripts executed.",
-"EXISTS <sha1> [<sha1> ...]",
-"    Return information about the existence of the scripts in the script cache.",
-"FLUSH [ASYNC|SYNC]",
-"    Flush the Lua scripts cache. Very dangerous on replicas.",
-"    When called without the optional mode argument, the behavior is determined by the",
-"    lazyfree-lazy-user-flush configuration directive. Valid modes are:",
-"    * ASYNC: Asynchronously flush the scripts cache.",
-"    * SYNC: Synchronously flush the scripts cache.",
-"KILL",
-"    Kill the currently executing Lua script.",
-"LOAD <script>",
-"    Load a script into the scripts cache without executing it.",
-
-
-struct redisCommand objectSubcommands[] = {
+struct redisCommand scriptSubcommands[] = {
     {"debug",scriptCommand,3,
-     "read-only @keyspace",
-     {{"read",
-       KSPEC_BS_INDEX,.bs.index={2},
-       KSPEC_FK_RANGE,.fk.range={0,1,0}}}},
+     "no-script @scripting"},
 
-    {"freq",objectCommand,3,
-     "read-only @keyspace",
-     {{"read",
-       KSPEC_BS_INDEX,.bs.index={2},
-       KSPEC_FK_RANGE,.fk.range={0,1,0}}}},
+    {"exists",scriptCommand,-3,
+     "no-script @scripting"},
 
-    {"idletime",objectCommand,3,
-     "read-only random @keyspace",
-     {{"read",
-       KSPEC_BS_INDEX,.bs.index={2},
-       KSPEC_FK_RANGE,.fk.range={0,1,0}}}},
+    {"flush",scriptCommand,3,
+     "may-replicate no-script @scripting"},
 
-    {"refcount",objectCommand,3,
-     "read-only @keyspace",
-     {{"read",
-       KSPEC_BS_INDEX,.bs.index={2},
-       KSPEC_FK_RANGE,.fk.range={0,1,0}}}},
+    {"kill",scriptCommand,2,
+     "no-script @scripting"},
 
-    {"help",objectCommand,2,
+    {"load",scriptCommand,3,
+     "may-replicate no-script @scripting"},
+
+    {"help",scriptCommand,2,
      ""},
 
     {NULL},
@@ -1566,8 +1538,9 @@ struct redisCommand redisCommandTable[] = {
      "container",
      .subcommands=slowlogSubcommands},
 
-    {"script",scriptCommand,-2,
-     "no-script may-replicate @scripting"},
+    {"script",NULL,-2,
+     "container",
+     .subcommands=scriptSubcommands},
 
     {"time",timeCommand,1,
      "random fast ok-loading ok-stale"},

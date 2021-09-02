@@ -9185,8 +9185,7 @@ void moduleCommand(client *c) {
 NULL
         };
         addReplyHelp(c, help);
-    } else
-    if (!strcasecmp(subcmd,"load") && c->argc >= 3) {
+    } else if (!strcasecmp(subcmd,"load") && c->argc >= 3) {
         robj **argv = NULL;
         int argc = 0;
 

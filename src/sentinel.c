@@ -467,6 +467,8 @@ void sentinelConfigSetCommand(client *c);
 // TODO:GUYBE
 // 1. should we use subcommands scheme here?
 // 2. should we support the new COMMANDS?
+// idea: maybe all the commands will apear in the generated commands.c, and when redis/sentinel fill their own
+// command dicts we will have an explicit include/exclude list
 struct redisCommand sentinelcmds[] = {
     {"ping",pingCommand,1,"fast @connection"},
     {"sentinel",sentinelCommand,-2,"admin"},

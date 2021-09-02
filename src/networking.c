@@ -2324,7 +2324,8 @@ sds catClientInfoString(sds s, client *client) {
     if (client->argv)
         total_mem += zmalloc_size(client->argv);
 
-    return sdscatfmt(s,
+    sds cmdname = client->lastcmd ? getFullCommandName(client->lastcmd) : NULL;
+    sds ret = sdscatfmt(s,
         "id=%U addr=%s laddr=%s %s name=%s age=%I idle=%I flags=%s db=%i sub=%i psub=%i multi=%i qbuf=%U qbuf-free=%U argv-mem=%U obl=%U oll=%U omem=%U tot-mem=%U events=%s cmd=%s user=%s redir=%I",
         (unsigned long long) client->id,
         getClientPeerId(client),
@@ -2346,9 +2347,12 @@ sds catClientInfoString(sds s, client *client) {
         (unsigned long long) obufmem, /* should not include client->buf since we want to see 0 for static clients. */
         (unsigned long long) total_mem,
         events,
-        client->lastcmd ? client->lastcmd->name : "NULL",
+        cmdname ? cmdname : "NULL",
         client->user ? client->user->name : "(superuser)",
         (client->flags & CLIENT_TRACKING) ? (long long) client->client_tracking_redirection : -1);
+    if (cmdname)
+        sdsfree(cmdname);
+    return ret;
 }
 
 sds getAllClientsInfoString(int type) {
@@ -2491,6 +2495,8 @@ void clientCommand(client *c) {
 "    Control the replies sent to the current connection.",
 "SETNAME <name>",
 "    Assign the name <name> to the current connection.",
+"GETNAME",
+"    Get the name of the current connection.",
 "UNBLOCK <clientid> [TIMEOUT|ERROR]",
 "    Unblock the specified blocked client.",
 "TRACKING (ON|OFF) [REDIRECT <id>] [BCAST] [PREFIX <prefix> [...]]",

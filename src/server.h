@@ -1776,6 +1776,7 @@ struct redisCommand {
     int key_specs_max;
     int movablekeys; /* See populateCommandMovableKeys */
     dict *subcommands_dict;
+    struct redisCommand *parent;
 };
 
 struct redisError {
@@ -2847,6 +2848,7 @@ void _serverPanic(const char *file, int line, const char *msg, ...);
 #endif
 void serverLogObjectDebugInfo(const robj *o);
 void sigsegvHandler(int sig, siginfo_t *info, void *secret);
+sds getFullCommandName(struct redisCommand *cmd);
 const char *getSafeInfoString(const char *s, size_t len, char **tmp);
 sds genRedisInfoString(const char *section);
 sds genModulesInfoString(sds info);

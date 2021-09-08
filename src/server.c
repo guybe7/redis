@@ -632,6 +632,70 @@ struct redisCommand clusterSubcommands[] = {
     {NULL},
 };
 
+struct redisCommand sentinelSubcommands[] = {
+    {"ckquorum",sentinelCommand,3,
+     "admin only-sentinel"},
+
+    {"config",sentinelCommand,-3,
+     "admin only-sentinel"},
+
+    {"debug",sentinelCommand,2,
+     "admin only-sentinel"},
+
+    {"get-master-addr-by-name",sentinelCommand,3,
+     "admin only-sentinel"},
+
+    {"failover",sentinelCommand,3,
+     "admin only-sentinel"},
+
+    {"flushconfig",sentinelCommand,2,
+     "admin only-sentinel"},
+
+    {"info-cache",sentinelCommand,3,
+     "admin only-sentinel"},
+
+    {"is-master-down-by-addr",sentinelCommand,6,
+     "admin only-sentinel"},
+
+    {"master",sentinelCommand,3,
+     "admin only-sentinel"},
+
+    {"masters",sentinelCommand,2,
+     "admin only-sentinel"},
+
+    {"monitor",sentinelCommand,6,
+     "admin only-sentinel"},
+
+    {"myid",sentinelCommand,2,
+     "admin only-sentinel"},
+
+    {"pending-scripts",sentinelCommand,2,
+     "admin only-sentinel"},
+
+    {"remove",sentinelCommand,3,
+     "admin only-sentinel"},
+
+    {"replicas",sentinelCommand,3,
+     "admin only-sentinel"},
+
+    {"reset",sentinelCommand,3,
+     "admin only-sentinel"},
+
+    {"sentinels",sentinelCommand,3,
+     "admin only-sentinel"},
+
+    {"set",sentinelCommand,5,
+     "admin only-sentinel"},
+
+    {"simulate-failure",sentinelCommand,3,
+     "admin only-sentinel"},
+
+    {"help",sentinelCommand,2,
+     ""},
+
+    {NULL},
+};
+
 struct redisCommand redisCommandTable[] = {
     {"module",NULL,-2,
      "container",
@@ -1446,8 +1510,9 @@ struct redisCommand redisCommandTable[] = {
     {"ping",pingCommand,-1,
      "ok-stale fast sentinel @connection"},
 
-    {"sentinel",sentinelCommand,-2,
-     "admin only-sentinel"},
+    {"sentinel",NULL,-2,
+     "admin only-sentinel",
+     .subcommands=sentinelSubcommands},
 
     {"echo",echoCommand,2,
      "fast @connection"},

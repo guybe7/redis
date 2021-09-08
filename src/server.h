@@ -231,7 +231,8 @@ extern int configOOMScoreAdjValuesDefaults[CONFIG_OOM_COUNT];
 #define CMD_CATEGORY_SCRIPTING (1ULL<<39)
 
 #define CMD_CONTAINER (1ULL<<40)       /* "container" flag */
-
+#define CMD_SENTINEL (1ULL<<41)        /* "sentinel" flag */
+#define CMD_ONLY_SENTINEL (1ULL<<42)   /* "only-sentinel" flag */
 
 /* AOF states */
 #define AOF_OFF 0             /* AOF is off */
@@ -2533,6 +2534,10 @@ void queueSentinelConfig(sds *argv, int argc, int linenum, sds line);
 void loadSentinelConfigFromQueue(void);
 void sentinelIsRunning(void);
 void sentinelCheckConfigFile(void);
+void sentinelCommand(client *c);
+void sentinelInfoCommand(client *c);
+void sentinelPublishCommand(client *c);
+void sentinelRoleCommand(client *c);
 
 /* redis-check-rdb & aof */
 int redis_check_rdb(char *rdbfilename, FILE *fp);

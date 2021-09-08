@@ -562,56 +562,6 @@ struct redisCommand pubsubSubcommands[] = {
     {NULL},
 };
 
-#if 0
-{"cluster",clusterCommand,-2,
-     "admin ok-stale random"},
-
-"ADDSLOTS <slot> [<slot> ...]",
-"    Assign slots to current node.",
-"BUMPEPOCH",
-"    Advance the cluster config epoch.",
-"COUNT-FAILURE-REPORTS <node-id>",
-"    Return number of failure reports for <node-id>.",
-"COUNTKEYSINSLOT <slot>",
-"    Return the number of keys in <slot>.",
-"DELSLOTS <slot> [<slot> ...]",
-"    Delete slots information from current node.",
-"FAILOVER [FORCE|TAKEOVER]",
-"    Promote current replica node to being a master.",
-"FORGET <node-id>",
-"    Remove a node from the cluster.",
-"GETKEYSINSLOT <slot> <count>",
-"    Return key names stored by current node in a slot.",
-"FLUSHSLOTS",
-"    Delete current node own slots information.",
-"INFO",
-"    Return information about the cluster.",
-"KEYSLOT <key>",
-"    Return the hash slot for <key>.",
-"MEET <ip> <port> [<bus-port>]",
-"    Connect nodes into a working cluster.",
-"MYID",
-"    Return the node id.",
-"NODES",
-"    Return cluster configuration seen by node. Output format:",
-"    <id> <ip:port> <flags> <master> <pings> <pongs> <epoch> <link> <slot> ...",
-"REPLICATE <node-id>",
-"    Configure current node as replica to <node-id>.",
-"RESET [HARD|SOFT]",
-"    Reset current node (default: soft).",
-"SET-CONFIG-EPOCH <epoch>",
-"    Set config epoch of current node.",
-"SETSLOT <slot> (IMPORTING|MIGRATING|STABLE|NODE <node-id>)",
-"    Set slot state.",
-"REPLICAS <node-id>",
-"    Return <node-id> replicas.",
-"SAVECONFIG",
-"    Force saving cluster configuration on disk.",
-"SLOTS",
-"    Return information about slots range mappings. Each range is made of:",
-"    start, end, master and replicas IP addresses, ports and ids",
-
-#endif
 struct redisCommand clusterSubcommands[] = {
     {"addslots",clusterCommand,-3,
      "admin ok-stale random"},
@@ -628,7 +578,7 @@ struct redisCommand clusterSubcommands[] = {
     {"delslots",clusterCommand,-3,
      "admin ok-stale random"},
 
-    {"failover",clusterCommand,3,
+    {"failover",clusterCommand,-2,
      "admin ok-stale random"},
 
     {"forget",clusterCommand,3,
@@ -676,7 +626,7 @@ struct redisCommand clusterSubcommands[] = {
     {"slots",clusterCommand,2,
      "admin ok-stale random"},
 
-    {"help",pubsubCommand,2,
+    {"help",clusterCommand,2,
      ""},
 
     {NULL},
@@ -1488,13 +1438,16 @@ struct redisCommand redisCommandTable[] = {
      "read-only fast @keyspace"},
 
     {"auth",authCommand,-2,
-     "no-auth no-script ok-loading ok-stale fast @connection"},
+     "no-auth no-script ok-loading ok-stale fast sentinel @connection"},
 
     /* We don't allow PING during loading since in Redis PING is used as
      * failure detection, and a loading server is considered to be
      * not available. */
     {"ping",pingCommand,-1,
-     "ok-stale fast @connection"},
+     "ok-stale fast sentinel @connection"},
+
+    {"sentinel",sentinelCommand,-2,
+     "admin only-sentinel"},
 
     {"echo",echoCommand,2,
      "fast @connection"},
@@ -1509,7 +1462,7 @@ struct redisCommand redisCommandTable[] = {
      "admin no-script"},
 
     {"shutdown",shutdownCommand,-1,
-     "admin no-script ok-loading ok-stale"},
+     "admin no-script ok-loading ok-stale sentinel"},
 
     {"lastsave",lastsaveCommand,1,
      "random fast ok-loading ok-stale @admin @dangerous"},
@@ -1561,7 +1514,7 @@ struct redisCommand redisCommandTable[] = {
        KSPEC_FK_RANGE,.fk.range={0,1,0}}}},
 
     {"info",infoCommand,-1,
-     "ok-loading ok-stale random @dangerous"},
+     "ok-loading ok-stale random sentinel @dangerous"},
 
     {"monitor",monitorCommand,1,
      "admin no-script ok-loading ok-stale"},
@@ -1609,7 +1562,7 @@ struct redisCommand redisCommandTable[] = {
      "admin no-script ok-stale"},
 
     {"role",roleCommand,1,
-     "ok-loading ok-stale no-script fast @admin @dangerous"},
+     "ok-loading ok-stale no-script fast sentinel @admin @dangerous"},
 
     {"debug",debugCommand,-2,
      "admin no-script ok-loading ok-stale"},
@@ -1619,19 +1572,19 @@ struct redisCommand redisCommandTable[] = {
      .subcommands=configSubcommands},
 
     {"subscribe",subscribeCommand,-2,
-     "pub-sub no-script ok-loading ok-stale"},
+     "pub-sub no-script ok-loading ok-stale sentinel"},
 
     {"unsubscribe",unsubscribeCommand,-1,
-     "pub-sub no-script ok-loading ok-stale"},
+     "pub-sub no-script ok-loading ok-stale sentinel"},
 
     {"psubscribe",psubscribeCommand,-2,
-     "pub-sub no-script ok-loading ok-stale"},
+     "pub-sub no-script ok-loading ok-stale sentinel"},
 
     {"punsubscribe",punsubscribeCommand,-1,
-     "pub-sub no-script ok-loading ok-stale"},
+     "pub-sub no-script ok-loading ok-stale sentinel"},
 
     {"publish",publishCommand,3,
-     "pub-sub ok-loading ok-stale fast may-replicate"},
+     "pub-sub ok-loading ok-stale fast may-replicate sentinel"},
 
     {"pubsub",NULL,-2,
      "container",
@@ -1696,11 +1649,11 @@ struct redisCommand redisCommandTable[] = {
      .subcommands=memorySubcommands},
 
     {"client",NULL,-2,
-     "container",
+     "container sentinel",
      .subcommands=clientSubcommands},
 
     {"hello",helloCommand,-1,
-     "no-auth no-script fast ok-loading ok-stale @connection"},
+     "no-auth no-script fast ok-loading ok-stale sentinel @connection"},
 
     /* EVAL can modify the dataset, however it is not flagged as a write
      * command since we do the check while running commands from Lua.
@@ -1772,11 +1725,11 @@ struct redisCommand redisCommandTable[] = {
      "no-script @connection"},
 
     {"command",commandCommand,-1,
-     "container ok-loading ok-stale random @connection",
+     "container ok-loading ok-stale random sentinel @connection",
      .subcommands=commandSubcommands},
 
     {"commands",NULL,-2,
-     "container",
+     "container sentinel",
      .subcommands=commandsSubcommands},
 
     {"geoadd",geoaddCommand,-5,
@@ -1995,7 +1948,7 @@ struct redisCommand redisCommandTable[] = {
      "read-only fast"},
 
     {"acl",aclCommand,-2,
-     "admin no-script ok-loading ok-stale"},
+     "admin no-script ok-loading ok-stale sentinel"},
 
     {"stralgo",NULL,-2,
      "container",
@@ -4339,6 +4292,10 @@ int populateSingleCommand(struct redisCommand *c, char *strflags) {
             c->flags |= CMD_MAY_REPLICATE;
         } else if (!strcasecmp(flag,"container")) {
             c->flags |= CMD_CONTAINER;
+        } else if (!strcasecmp(flag,"sentinel")) {
+            c->flags |= CMD_SENTINEL;
+        } else if (!strcasecmp(flag,"only-sentinel")) {
+            c->flags |= CMD_ONLY_SENTINEL;
         } else {
             /* Parse ACL categories here if the flag name starts with @. */
             uint64_t catflag;
@@ -4417,8 +4374,6 @@ int populateSingleCommand(struct redisCommand *c, char *strflags) {
     return C_OK;
 }
 
-redisCommandProc *commands_whitelist[] = [sentinelCommand];
-
 /* Populates the Redis Command Table starting from the hard coded list
  * we have on top of server.c file. */
 void populateCommandTable(void) {
@@ -4427,6 +4382,13 @@ void populateCommandTable(void) {
 
     for (j = 0; j < numcommands; j++) {
         struct redisCommand *c = redisCommandTable+j;
+
+        if (!(c->flags & CMD_SENTINEL) && server.sentinel_mode)
+            continue;
+
+        if (c->flags & CMD_ONLY_SENTINEL && !server.sentinel_mode)
+            continue;
+
         int retval1, retval2;
 
         /* Assign the ID used for ACL (must be done before populateSingleCommand). */
@@ -5531,6 +5493,8 @@ void addReplyFlagsForCommand(client *c, struct redisCommand *cmd) {
     flagcount += addReplyCommandFlag(c,cmd->flags,CMD_NO_AUTH, "no_auth");
     flagcount += addReplyCommandFlag(c,cmd->flags,CMD_MAY_REPLICATE, "may_replicate");
     flagcount += addReplyCommandFlag(c,cmd->flags,CMD_CONTAINER, "container");
+    flagcount += addReplyCommandFlag(c,cmd->flags,CMD_SENTINEL, "sentinel");
+    flagcount += addReplyCommandFlag(c,cmd->flags,CMD_ONLY_SENTINEL, "only-sentinel");
     if (cmd->movablekeys) {
         addReplyStatus(c, "movablekeys");
         flagcount += 1;
@@ -6635,6 +6599,11 @@ sds genRedisInfoString(const char *section) {
 }
 
 void infoCommand(client *c) {
+    if (server.sentinel_mode) {
+        sentinelInfoCommand(c);
+        return;
+    }
+
     char *section = c->argc == 2 ? c->argv[1]->ptr : "default";
 
     if (c->argc > 2) {

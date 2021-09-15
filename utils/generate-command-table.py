@@ -6,6 +6,25 @@ import json
 
 # Note: This script should be run from the src/ dir: ../utils/generate-command-table.py
 
+GROUPS = [
+    "generic",
+    "string",
+    "list",
+    "set",
+    "sorted_set",
+    "hash",
+    "pubsub",
+    "transactions",
+    "connection",
+    "server",
+    "scripting",
+    "hyperloglog",
+    "cluster",
+    "geo",
+    "stream",
+    "bitmap"
+]
+
 class KeySpec(object):
     def __init__(self, spec):
         self.spec = spec
@@ -31,7 +50,7 @@ class KeySpec(object):
                 print("Invalid begin_search! value=%s" % self.spec["begin_search"])
                 exit(1)
 
-        def find_keys_code():
+        def _find_keys_code():
             if self.spec["find_keys"].get("range"):
                 return "KSPEC_FK_RANGE,.fk.range={%d,%d,%d}" % (
                     self.spec["find_keys"]["range"]["lastkey"],
@@ -51,7 +70,7 @@ class KeySpec(object):
         return "\"%s\",%s,%s" % (
             _flags_code(),
             _begin_search_code(),
-            find_keys_code()
+            _find_keys_code()
         )
 
 
@@ -62,7 +81,10 @@ class Command(object):
         self.subcommands = []
         self.group = self.desc["group"]
 
-    def code(self):
+    def fullname(self):
+        return self.name
+
+    def command_table_code(self):
         """
         "SET",setCommand,-3,"write use-memory @string",{{"write",KSPEC_BS_INDEX,.bs.index={1},KSPEC_FK_RANGE,.fk.range={0,1,0}}}
         """
@@ -97,6 +119,44 @@ class Command(object):
 
         return s[:-1]
 
+    def help_code(self):
+        def _arg_syntax_code(arg):
+            s = ""
+            if arg.get("optional"):
+                s += "["
+            if not arg.get("type"):
+                assert arg.get("token")
+                s += arg["token"]
+            else:
+                if arg.get("token"):
+                    s += "%s " % arg["token"]
+
+                if arg["type"] == "oneof":
+                    tmp_s = "|".join(_arg_syntax_code(_arg) for _arg in arg["value"])
+                    s += "(%s)" % tmp_s
+                elif arg["type"] == "block":
+                    s += " ".join(_arg_syntax_code(_arg) for _arg in arg["value"])
+                else:
+                    s += arg["value"]
+                    if arg.get("multiple"):
+                        tmp_arg = dict(arg)
+                        tmp_arg.pop("multiple")
+                        tmp_arg.pop("optional", None)
+                        tmp_arg.pop("token", None)
+                        s += " [%s ...]" % _arg_syntax_code(tmp_arg)
+            if arg.get("optional"):
+                s += "]"
+            return s
+                
+        return "\"%s\",\n\"%s\",\n\"%s\",\n%d,\n\"%s\"" % (
+            self.fullname(),
+            " ".join(_arg_syntax_code(_arg) for _arg in self.desc.get("arguments", [])),
+            self.desc["summary"],
+            GROUPS.index(self.group),
+            self.desc["since"]
+        )
+    
+
     def __str__(self):
         return self.code()
 
@@ -110,14 +170,21 @@ class ContainerCommand(Command):
         assert self.subcommands
         return "%s_Subcommands" % self.name
 
-    def code(self):
-        return super(ContainerCommand, self).code() + ",.subcommands=%s" % self.subcommands_table_name()
+    def command_table_code(self):
+        return super(ContainerCommand, self).command_table_code() + ",.subcommands=%s" % self.subcommands_table_name()
+
+    def help_code(self):
+        # COMMAND is the only container command that is not a pure container...
+        return super(ContainerCommand, self).command_table_code() if self.name == "COMMAND" else None
 
 
 class Subcommand(Command):
     def __init__(self, name, desc):
         super(Subcommand, self).__init__(name, desc)
         self.container_name = self.desc["container"].upper()
+
+    def fullname(self):
+        return "%s %s" % (self.container_name, name)
 
 
 subcommands = {}  # container_name -> dict(subcommand_name -> Subcommand)
@@ -153,16 +220,17 @@ for container in container_commands.values():
     for subcommand in subcommands[container.name].values():
         container.subcommands.append(subcommand)
 
-
 def write_command_table(f, container_name, table_name, command_list):
     f.write("/* %s command table */\n" % (container_name or "Main"))
     f.write("struct redisCommand %s[] = {\n" % table_name)
     curr_group = None
     for command in command_list:
+        print command.fullname()
+        print command.help_code()
         if container_name is None and curr_group != command.group:
             curr_group = command.group
             f.write("    /* %s */\n" % curr_group)
-        f.write("    {%s},\n" % command)
+        f.write("    {%s},\n" % command.command_table_code())
     f.write("}\n\n")
 
 

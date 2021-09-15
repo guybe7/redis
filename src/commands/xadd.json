@@ -94,7 +94,8 @@
                     },
                     {
                         "name":"specific",
-                        "token":"ID"
+                        "type": "string",
+                        "value":"ID"
                     }
                 ]
             },

@@ -41,7 +41,7 @@
             {
                 "name":"aggregate",
                 "type":"oneof",
-                "token":"WEIGHTS",
+                "token":"AGGREGATE",
                 "value":[
                     {
                         "name":"sum",

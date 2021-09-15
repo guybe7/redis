@@ -66,6 +66,20 @@
                         "value":"milliseconds"
                     },
                     {
+                        "name":"exat",
+                        "since":"6.2.0",
+                        "type":"unix_time",
+                        "token":"EXAT",
+                        "value":"timestamp"
+                    },
+                    {
+                        "name":"pxat",
+                        "since":"6.2.0",
+                        "type":"unix_time",
+                        "token":"PXAT",
+                        "value":"milliseconds-timestamp"
+                    },
+                    {
                         "name":"keepttl",
                         "since":"6.0.0",
                         "token":"KEEPTTL"

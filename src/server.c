@@ -4591,6 +4591,8 @@ void populateCommandTable(void) {
         struct redisCommand *c = redisCommandTable+j;
         int retval1, retval2;
 
+        c->proc = redisCommandTable[j].proc;
+
         /* Translate the command string flags description into an actual
          * set of flags. */
         parseCommandFlags(c,c->sflags);
@@ -5854,6 +5856,8 @@ void addReplyCommandSubCommands(client *c, struct redisCommand *cmd) {
     dictReleaseIterator(di);
 }
 
+#include <execinfo.h>
+
 /* Output the representation of a Redis command. Used by the COMMAND command. */
 void addReplyCommand(client *c, struct redisCommand *cmd) {
     if (!cmd) {
@@ -5868,7 +5872,7 @@ void addReplyCommand(client *c, struct redisCommand *cmd) {
             keystep = cmd->legacy_range_key_spec.fk.range.keystep;
         }
         /* We are adding: command name, arg count, flags, first, last, offset, categories, key args, subcommands */
-        addReplyArrayLen(c, 9);
+        addReplyArrayLen(c, 11);
         addReplyBulkCString(c, cmd->name);
         addReplyLongLong(c, cmd->arity);
         addReplyFlagsForCommand(c, cmd);
@@ -5878,6 +5882,20 @@ void addReplyCommand(client *c, struct redisCommand *cmd) {
         addReplyCommandCategories(c,cmd);
         addReplyCommandKeyArgs(c,cmd);
         addReplyCommandSubCommands(c,cmd);
+        if (cmd->proc) {
+            redisCommandProc *fptr = cmd->proc;
+            char **bt_syms = backtrace_symbols(&fptr, 1);
+            addReplyBulkCString(c, bt_syms[0]);
+        } else {
+            addReplyNull(c);
+        }
+        if (cmd->getkeys_proc) {
+            redisGetKeysProc *fptr = cmd->getkeys_proc;
+            char **bt_syms = backtrace_symbols(&fptr, 1);
+            addReplyBulkCString(c, bt_syms[0]);
+        } else {
+            addReplyNull(c);
+        }
     }
 }
 

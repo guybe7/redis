@@ -5733,6 +5733,9 @@ void addReplyFlagsForCommand(client *c, struct redisCommand *cmd) {
     flagcount += addReplyCommandFlag(c,cmd->flags,CMD_FAST, "fast");
     flagcount += addReplyCommandFlag(c,cmd->flags,CMD_NO_AUTH, "no_auth");
     flagcount += addReplyCommandFlag(c,cmd->flags,CMD_MAY_REPLICATE, "may_replicate");
+    flagcount += addReplyCommandFlag(c,cmd->flags,CMD_SENTINEL, "sentinel");
+    flagcount += addReplyCommandFlag(c,cmd->flags,CMD_ONLY_SENTINEL, "only_sentinel");
+    flagcount += addReplyCommandFlag(c,cmd->flags,CMD_NO_MANDATORY_KEYS, "no_mandatory_keys");
     /* "sentinel" and "only-sentinel" are hidden on purpose. */
     if (cmd->movablekeys) {
         addReplyStatus(c, "movablekeys");

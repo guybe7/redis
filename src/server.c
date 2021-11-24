@@ -4600,8 +4600,8 @@ void populateCommandTable(void) {
         if (!(c->flags & CMD_SENTINEL) && server.sentinel_mode)
             continue;
 
-        if (c->flags & CMD_ONLY_SENTINEL && !server.sentinel_mode)
-            continue;
+        //if (c->flags & CMD_ONLY_SENTINEL && !server.sentinel_mode)
+            //continue;
 
         populateCommandStructure(c);
 

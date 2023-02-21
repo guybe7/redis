@@ -246,6 +246,9 @@ if __name__ == '__main__':
     for path in glob.glob('%s/tmp/*/*.reqres' % testdir):
         paths.append(path)
 
+    for path in glob.glob('%s/cluster/tmp/*/*.reqres' % testdir):
+        paths.append(path)
+
     counter = collections.Counter()
     missing_schema = set()
     with multiprocessing.Pool(multiprocessing.cpu_count()) as pool:
